@@ -1,9 +1,15 @@
 name = "BICsCom"
 uuid = "13fa395e-27be-4a0b-a18e-43e4656a4191"
-authors = ["Jiayi Zhang"]
 version = "0.1.0"
+authors = ["Jiayi Zhang"]
+
+[deps]
+Bessels = "0e736298-9ec6-45e8-9647-e4fc86a2fe38"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
 [compat]
+Bessels = "0.2.8"
+LinearAlgebra = "1.12.0"
 julia = "1"
 
 [extras]
