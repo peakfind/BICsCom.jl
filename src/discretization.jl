@@ -21,10 +21,10 @@ The sampling points along the boundary of a square. The points are placed along 
 boundary counter clockwisely (bottom --> left --> top --> right).
 
 # Fields
-- `n`: the number of the sampling points on one edge
-- `cc`: the Cartesian coordinates of all sampling points
-- `pc`: the Polar coordinates of all sampling points
-- `ν`: the outer normal derivative of all sampling points
+- `n::Int64`: the number of the sampling points on one edge
+- `cc::Matrix{Float64}`: the Cartesian coordinates of all sampling points
+- `pc::Matrix{Float64}`: the Polar coordinates of all sampling points
+- `ν::Matrix{Float64}`: the outer normal derivative of all sampling points
 """
 struct SamplingPoints
     n::Int64
@@ -70,8 +70,8 @@ end
 Generate the sampling points along the bounary of a square `sq`.
 
 # Arguments
-- `sq::Square`: a square
-- `n::Int64`: the number of sampling points on each edge
+- `sq`: a square
+- `n`: the number of sampling points on each edge
 """
 function get_samplingpoints(sq::Square, n::Int64)
     # Precompute common constants
