@@ -110,11 +110,8 @@ the spherical expansion.
 - `ext`: the dielectric constant outside the cylinder
 
 # Note 
-- `J_ext` and `Y_ext` are matrices of Bessel functions and Neumann functions, 
-respectively. Their rows are indexed by radii (the sampling points) and columns 
-are indexed by orders.
-- We uitilize the symmetry of the square. So this function is not applicable for 
-general contours.
+- `J_ext` and `Y_ext` are matrices of Bessel functions and Neumann functions, respectively. Their rows are indexed by radii (the sampling points) and columns are indexed by orders.
+- We uitilize the symmetry of the square. So this function is not applicable for general contours.
 """
 function build_boundary_cache(sp::SamplingPoints, Ne, k, ext = 1.0)
     Ns = 4 * sp.n
@@ -175,7 +172,7 @@ Compute the Dirichlet-to-Neumann matrix on a square based on the spherical expan
 # Arguments
 - `sp`: the sampling points
 - `Ne`: the number of terms in the truncated spherical expansion
-- `coeff`: from `get_coeff()`, coefficients in front of Bessel functions and Neumann functions in the spherical expansion outside the cylinder
+- `coeff`: from [`get_coeff()`](@ref), coefficients in front of Bessel functions and Neumann functions in the spherical expansion outside the cylinder
 - `bc`: the `BoundaryCache`
 - `k`: the wavenumber
 - `ext`: the dielectric constant outside the cylinder
