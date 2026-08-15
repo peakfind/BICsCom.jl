@@ -48,7 +48,7 @@ function apply_bc(Λ, n::Int64; α::Float64 = 0.0, period::Float64 = 2π)
 end
 
 """
-    beta_m(m::Int64, k; α = 0.0, ext = 1.0, period = 2π)
+    beta_m(m::Int64, k; α = 0.0, homo = 1.0, period = 2π)
 
 Compute ``\\beta_{m}`` given by 
 ```math
@@ -59,12 +59,12 @@ Compute ``\\beta_{m}`` given by
 - `m`: the order of the Fourier mode
 - `k`: the wavenumber
 - `α`: the Bloch wavenumber
-- `ext`: the dielectric constant outside the cylinder
+- `homo`: the dielectric constant of the homogeneous medium outside the periodic slab
 - `period`: the period of the periodic slab
 """
-function beta_m(m::Int64, k; α = 0.0, ext = 1.0, period = 2π)
+function beta_m(m::Int64, k; α = 0.0, homo = 1.0, period = 2π)
     α² = (α + 2π * m / period)^2
-    k² = k * k * ext
+    k² = k * k * homo
     
     if k² > α²
         β = complex(sqrt(k² - α²))
@@ -103,7 +103,7 @@ function assemble_tbc(x, beta, fmodes; α = 0.0, period = 2π)
 end
 
 """
-    apply_tbc!(Δ, sp::SamplingPoints, k; α = 0.0, ext = 1.0, period = 2π)
+    apply_tbc!(Δ, sp::SamplingPoints, k; α = 0.0, homo = 1.0, period = 2π)
 
 Impose the Transparent Boundary Condition for the top and bottom boundary.
 
@@ -112,10 +112,10 @@ Impose the Transparent Boundary Condition for the top and bottom boundary.
 - `sp`: all sampling points
 - `k`: the wavenumber
 - `α`: the Bloch wavenumber
-- `ext`: the dielectric constant outside the cylinder
+- `homo`: the dielectric constant of the homogeneous medium outside the periodic slab
 - `period`: the period of the periodic slab
 """
-function  apply_tbc!(Δ, sp::SamplingPoints, k; α = 0.0, ext = 1.0, period = 2π)
+function  apply_tbc!(Δ, sp::SamplingPoints, k; α = 0.0, homo = 1.0, period = 2π)
     n = sp.n
     # Get bottom and top x coordinates
     xb = @views sp.cc[1, 1:n]
@@ -127,7 +127,7 @@ function  apply_tbc!(Δ, sp::SamplingPoints, k; α = 0.0, ext = 1.0, period = 2�
         fmodes = collect(-(n-1)÷2 : (n-1)÷2)
     end
     
-    β = [beta_m(m, k; α = α, ext = ext, period = period) for m in fmodes]
+    β = [beta_m(m, k; α = α, homo = homo, period = period) for m in fmodes]
     
     Tb = assemble_tbc(xb, β, fmodes; α = α, period = period)
     Tt = assemble_tbc(xt, β, fmodes; α = α, period = period)
