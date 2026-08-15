@@ -172,7 +172,7 @@ Compute the Dirichlet-to-Neumann matrix on a square based on the spherical expan
 # Arguments
 - `sp`: the sampling points
 - `Ne`: the number of terms in the truncated spherical expansion
-- `coeff`: from [`get_coeff()`](@ref), coefficients in front of Bessel functions and Neumann functions in the spherical expansion outside the cylinder
+- `coeff`: from [`get_coeff`](@ref), coefficients in front of Bessel functions and Neumann functions in the spherical expansion outside the cylinder
 - `bc`: the `BoundaryCache`
 - `k`: the wavenumber
 - `ext`: the dielectric constant outside the cylinder

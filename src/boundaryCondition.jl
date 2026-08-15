@@ -103,7 +103,7 @@ function assemble_tbc(x, beta, fmodes; α = 0.0, period = 2π)
 end
 
 """
-    apply_dtn!(Δ, sp::SamplingPoints, k; α = 0.0, ext = 1.0, period = 2π)
+    apply_tbc!(Δ, sp::SamplingPoints, k; α = 0.0, ext = 1.0, period = 2π)
 
 Impose the Transparent Boundary Condition for the top and bottom boundary.
 
@@ -115,7 +115,7 @@ Impose the Transparent Boundary Condition for the top and bottom boundary.
 - `ext`: the dielectric constant outside the cylinder
 - `period`: the period of the periodic slab
 """
-function  apply_dtn!(Δ, sp::SamplingPoints, k; α = 0.0, ext = 1.0, period = 2π)
+function  apply_tbc!(Δ, sp::SamplingPoints, k; α = 0.0, ext = 1.0, period = 2π)
     n = sp.n
     # Get bottom and top x coordinates
     xb = @views sp.cc[1, 1:n]
