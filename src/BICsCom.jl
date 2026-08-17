@@ -12,6 +12,6 @@ export BoundaryCache, build_boundary_cache, assemble_dtn
 
 include("boundaryCondition.jl")
 export apply_bc
-export beta_m, assemble_tbc, apply_dtn!
+export beta_m, assemble_tbc, apply_tbc!
 
 end
