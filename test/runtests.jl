@@ -1,6 +1,5 @@
 using BICsCom
 using Test
 
-@testset "BICsCom.jl" begin
-    # Write your tests here.
-end
+include("test_coef.jl")
+include("test_tbc.jl")
