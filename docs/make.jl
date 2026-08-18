@@ -6,10 +6,10 @@ using CairoMakie
 
 DocMeta.setdocmeta!(BICsCom, :DocTestSetup, :(using BICsCom); recursive=true)
 
-const cmakieExt = Base.get_extension(BICsCom, :CMakieExt)
+const CMakieExt = Base.get_extension(BICsCom, :CMakieExt)
 
 makedocs(;
-    modules=[BICsCom, cmakieExt],
+    modules=[BICsCom, CMakieExt],
     authors="Jiayi Zhang",
     sitename="BICsCom.jl",
     format=Documenter.HTML(;
