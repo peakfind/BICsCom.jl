@@ -64,7 +64,7 @@ Compute the coefficients in the spherical expansion outside the cylinder.
 - `inn`: the dielectric constant inside the cylinder
 - `ext`: the dielectric constant outside the cylinder
 """
-function get_coeff(Ne, cydc::CylinderCache, inn = 1.0, ext = 1.0)
+function get_coeff(Ne, cydc::CylinderCache, inn = 1.0, ext = 1.0; mode::Symbol = :te)
     sqr_inn = sqrt(inn)
     sqr_ext = sqrt(ext)
 
@@ -72,14 +72,31 @@ function get_coeff(Ne, cydc::CylinderCache, inn = 1.0, ext = 1.0)
     Je = cydc.J_ext
     Ye = cydc.Y_ext
     
-    coeff = Matrix{Float64}(undef, 2, Ne)
+    coeff = _solve_coeff(Ne, Ji, Je, Ye, sqr_inn, sqr_ext, mode)
     
-    for i in 1:Ne
-        lhs = [Je[i + 1] Ye[i + 1]; (Je[i] - Je[i + 2]) (Ye[i] - Ye[i + 2])]
-        rhs = [Ji[i + 1], sqr_inn * (Ji[i] - Ji[i + 2]) / sqr_ext]
-        coeff[:, i] = lhs \ rhs
-    end
+    return coeff
+end
 
+function _solve_coeff(Ne, Jinn, Jext, Yext, si, se, mode)
+    support_modes = (:te, :tm)
+    in(mode, support_modes) || ArgumentError("Please enter :te or :tm!")
+    
+    coeff = Matrix{Float64}(undef, 2, Ne)
+
+    if mode == :te
+        for i in 1:Ne
+            lhs = [Jext[i + 1] Yext[i + 1]; (Jext[i] - Jext[i + 2]) (Yext[i] - Yext[i + 2])]
+            rhs = [Jinn[i + 1], si * (Jinn[i] - Jinn[i + 2]) / se]
+            coeff[:, i] = lhs \ rhs
+        end
+    elseif mode == :tm
+        for i in 1:Ne
+            lhs = [Jext[i + 1] Yext[i + 1]; (Jext[i] - Jext[i + 2]) (Yext[i] - Yext[i + 2])]
+            rhs = [Jinn[i + 1], se * (Jinn[i] - Jinn[i + 2]) / si]
+            coeff[:, i] = lhs \ rhs
+        end
+    end
+    
     return coeff
 end
 
