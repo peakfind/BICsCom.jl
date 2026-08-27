@@ -233,7 +233,7 @@ function assemble_dtn(sp::SamplingPoints, Ne, coeff, bc::BoundaryCache, k, ext =
     return B / A, A
 end
 
-function assemble_dtn_hole(sp::SamplingPoints, Ne, coeff, bc::BoundaryCache, k, ext = 1.0, mode::Symbol, homo)
+function assemble_dtn_hole(sp::SamplingPoints, Ne, coeff, bc::BoundaryCache, k, ext; mode::Symbol=:te, homo=1.0)
     Ns = 4 * sp.n
     (Ns == Ne) || throw(ArgumentError("Ne must equal 4 * sp.n for a square matrix!"))
     (size(coeff, 2) == Ne) || throw(ArgumentError("coeff size mismatch"))
