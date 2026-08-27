@@ -232,3 +232,48 @@ function assemble_dtn(sp::SamplingPoints, Ne, coeff, bc::BoundaryCache, k, ext =
     
     return B / A, A
 end
+
+function assemble_dtn_hole(sp::SamplingPoints, Ne, coeff, bc::BoundaryCache, k, ext = 1.0, mode::Symbol, homo)
+    Ns = 4 * sp.n
+    (Ns == Ne) || throw(ArgumentError("Ne must equal 4 * sp.n for a square matrix!"))
+    (size(coeff, 2) == Ne) || throw(ArgumentError("coeff size mismatch"))
+
+    k_ext = k * sqrt(ext)
+    A = Matrix{ComplexF64}(undef, Ne, Ne)
+    B = similar(A)
+    
+    for j = 1:Ne 
+        order = bc.orders[j + 1]
+        aj = coeff[1, j]
+        bj = coeff[2, j]
+
+        for i = 1:Ns
+            # extract the polar coordinate
+            r, θ = sp.pc[1, i], sp.pc[2, i]
+            expo = exp(im * order * θ)
+            
+            Φ = aj * bc.J_ext[i, j + 1] + bj * bc.Y_ext[i, j + 1]
+            
+            # Derivatives
+            Jp = (bc.J_ext[i, j] - bc.J_ext[i, j + 2]) / 2
+            Yp = (bc.Y_ext[i, j] - bc.Y_ext[i, j + 2]) / 2
+            Ψ = k_ext * (aj * Jp + bj * Yp)
+            
+            # extract the normal vector
+            ν1, ν2 = sp.ν[1, i], sp.ν[2, i]
+            c1 = cos(θ) * ν1 + sin(θ) * ν2
+            c2 = cos(θ) * ν2 - sin(θ) * ν1
+            
+            A[i, j] = Φ * expo
+            B[i, j] = Ψ * expo * c1 + Φ * (im * order * expo / r) * c2
+        end
+    end
+    
+    if mode == :tm
+        ratio = homo / ext
+        B[1:sp.n, :] .*= ratio
+        B[2*sp.n + 1:3*sp.n, :] .*= ratio 
+    end
+    
+    return B / A, A
+end
