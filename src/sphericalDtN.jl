@@ -54,7 +54,7 @@ function build_cylinder_cache(Ne, k, r, inn = 1.0, ext = 1.0)
 end
 
 """
-    get_coeff(Ne, cydc::CylinderCache, inn = 1.0, ext = 1.0)
+    get_coeff(Ne, cydc::CylinderCache, inn = 1.0, ext = 1.0; mode::Symbol = :te)
 
 Compute the coefficients in the spherical expansion outside the cylinder.
 
@@ -63,8 +63,9 @@ Compute the coefficients in the spherical expansion outside the cylinder.
 - `cydc`: the `CylinderCache`
 - `inn`: the dielectric constant inside the cylinder
 - `ext`: the dielectric constant outside the cylinder
+- `mode`: the polarizations, supported types: `:te`, `:tm`
 """
-function get_coeff(Ne, cydc::CylinderCache, inn = 1.0, ext = 1.0)
+function get_coeff(Ne, cydc::CylinderCache, inn = 1.0, ext = 1.0; mode::Symbol = :te)
     sqr_inn = sqrt(inn)
     sqr_ext = sqrt(ext)
 
@@ -72,14 +73,31 @@ function get_coeff(Ne, cydc::CylinderCache, inn = 1.0, ext = 1.0)
     Je = cydc.J_ext
     Ye = cydc.Y_ext
     
-    coeff = Matrix{Float64}(undef, 2, Ne)
+    coeff = _solve_coeff(Ne, Ji, Je, Ye, sqr_inn, sqr_ext, mode)
     
-    for i in 1:Ne
-        lhs = [Je[i + 1] Ye[i + 1]; (Je[i] - Je[i + 2]) (Ye[i] - Ye[i + 2])]
-        rhs = [Ji[i + 1], sqr_inn * (Ji[i] - Ji[i + 2]) / sqr_ext]
-        coeff[:, i] = lhs \ rhs
-    end
+    return coeff
+end
 
+function _solve_coeff(Ne, Jinn, Jext, Yext, si, se, mode)
+    support_modes = (:te, :tm)
+    in(mode, support_modes) || ArgumentError("Please enter :te or :tm!")
+    
+    coeff = Matrix{Float64}(undef, 2, Ne)
+
+    if mode == :te
+        for i in 1:Ne
+            lhs = [Jext[i + 1] Yext[i + 1]; (Jext[i] - Jext[i + 2]) (Yext[i] - Yext[i + 2])]
+            rhs = [Jinn[i + 1], si * (Jinn[i] - Jinn[i + 2]) / se]
+            coeff[:, i] = lhs \ rhs
+        end
+    elseif mode == :tm
+        for i in 1:Ne
+            lhs = [Jext[i + 1] Yext[i + 1]; (Jext[i] - Jext[i + 2]) (Yext[i] - Yext[i + 2])]
+            rhs = [Jinn[i + 1], se * (Jinn[i] - Jinn[i + 2]) / si]
+            coeff[:, i] = lhs \ rhs
+        end
+    end
+    
     return coeff
 end
 
@@ -165,7 +183,7 @@ function build_boundary_cache(sp::SamplingPoints, Ne, k, ext = 1.0)
 end
 
 """
-    assemble_dtn(sp::SamplingPoints, Ne, coeff, bc::BoundaryCache, k, ext = 1.0)
+    assemble_dtn(sp::SamplingPoints, Ne, coeff, bc::BoundaryCache, k, ext; mode::Symbol=:te, homo=1.0)
 
 Compute the Dirichlet-to-Neumann matrix on a square based on the spherical expansion.
 
@@ -176,8 +194,13 @@ Compute the Dirichlet-to-Neumann matrix on a square based on the spherical expan
 - `bc`: the `BoundaryCache`
 - `k`: the wavenumber
 - `ext`: the dielectric constant outside the cylinder
+- `mode`: the polarizations, supported types: `:te`, `:tm`
+- `homo`: the dielectric constant of the homogeneous medium outside the periodic slab
+
+!!! note
+    The argument `homo` is only needed when we consider TM polarization, i.e., `mode = :tm`
 """
-function assemble_dtn(sp::SamplingPoints, Ne, coeff, bc::BoundaryCache, k, ext = 1.0)
+function assemble_dtn(sp::SamplingPoints, Ne, coeff, bc::BoundaryCache, k, ext; mode::Symbol = :te, homo = 1.0)
     Ns = 4 * sp.n
     (Ns == Ne) || throw(ArgumentError("Ne must equal 4 * sp.n for a square matrix!"))
     (size(coeff, 2) == Ne) || throw(ArgumentError("coeff size mismatch"))
@@ -211,6 +234,12 @@ function assemble_dtn(sp::SamplingPoints, Ne, coeff, bc::BoundaryCache, k, ext =
             A[i, j] = Φ * expo
             B[i, j] = Ψ * expo * c1 + Φ * (im * order * expo / r) * c2
         end
+    end
+
+    if mode == :tm
+        ratio = homo / ext
+        B[1:sp.n, :] .*= ratio
+        B[2*sp.n + 1:3*sp.n, :] .*= ratio 
     end
     
     return B / A, A
