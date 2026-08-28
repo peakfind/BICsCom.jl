@@ -54,7 +54,7 @@ function build_cylinder_cache(Ne, k, r, inn = 1.0, ext = 1.0)
 end
 
 """
-    get_coeff(Ne, cydc::CylinderCache, inn = 1.0, ext = 1.0)
+    get_coeff(Ne, cydc::CylinderCache, inn = 1.0, ext = 1.0; mode::Symbol = :te)
 
 Compute the coefficients in the spherical expansion outside the cylinder.
 
@@ -63,6 +63,7 @@ Compute the coefficients in the spherical expansion outside the cylinder.
 - `cydc`: the `CylinderCache`
 - `inn`: the dielectric constant inside the cylinder
 - `ext`: the dielectric constant outside the cylinder
+- `mode`: the polarizations, supported types: `:te`, `:tm`
 """
 function get_coeff(Ne, cydc::CylinderCache, inn = 1.0, ext = 1.0; mode::Symbol = :te)
     sqr_inn = sqrt(inn)
@@ -182,7 +183,7 @@ function build_boundary_cache(sp::SamplingPoints, Ne, k, ext = 1.0)
 end
 
 """
-    assemble_dtn(sp::SamplingPoints, Ne, coeff, bc::BoundaryCache, k, ext = 1.0)
+    assemble_dtn(sp::SamplingPoints, Ne, coeff, bc::BoundaryCache, k, ext; mode::Symbol=:te, homo=1.0)
 
 Compute the Dirichlet-to-Neumann matrix on a square based on the spherical expansion.
 
@@ -193,8 +194,13 @@ Compute the Dirichlet-to-Neumann matrix on a square based on the spherical expan
 - `bc`: the `BoundaryCache`
 - `k`: the wavenumber
 - `ext`: the dielectric constant outside the cylinder
+- `mode`: the polarizations, supported types: `:te`, `:tm`
+- `homo`: the dielectric constant of the homogeneous medium outside the periodic slab
+
+!!! note
+    The argument `homo` is only needed when we consider TM polarization, i.e., `mode = :tm`
 """
-function assemble_dtn(sp::SamplingPoints, Ne, coeff, bc::BoundaryCache, k, ext = 1.0)
+function assemble_dtn(sp::SamplingPoints, Ne, coeff, bc::BoundaryCache, k, ext; mode::Symbol = :te, homo = 1.0)
     Ns = 4 * sp.n
     (Ns == Ne) || throw(ArgumentError("Ne must equal 4 * sp.n for a square matrix!"))
     (size(coeff, 2) == Ne) || throw(ArgumentError("coeff size mismatch"))
@@ -229,46 +235,7 @@ function assemble_dtn(sp::SamplingPoints, Ne, coeff, bc::BoundaryCache, k, ext =
             B[i, j] = Ψ * expo * c1 + Φ * (im * order * expo / r) * c2
         end
     end
-    
-    return B / A, A
-end
 
-function assemble_dtn_hole(sp::SamplingPoints, Ne, coeff, bc::BoundaryCache, k, ext; mode::Symbol=:te, homo=1.0)
-    Ns = 4 * sp.n
-    (Ns == Ne) || throw(ArgumentError("Ne must equal 4 * sp.n for a square matrix!"))
-    (size(coeff, 2) == Ne) || throw(ArgumentError("coeff size mismatch"))
-
-    k_ext = k * sqrt(ext)
-    A = Matrix{ComplexF64}(undef, Ne, Ne)
-    B = similar(A)
-    
-    for j = 1:Ne 
-        order = bc.orders[j + 1]
-        aj = coeff[1, j]
-        bj = coeff[2, j]
-
-        for i = 1:Ns
-            # extract the polar coordinate
-            r, θ = sp.pc[1, i], sp.pc[2, i]
-            expo = exp(im * order * θ)
-            
-            Φ = aj * bc.J_ext[i, j + 1] + bj * bc.Y_ext[i, j + 1]
-            
-            # Derivatives
-            Jp = (bc.J_ext[i, j] - bc.J_ext[i, j + 2]) / 2
-            Yp = (bc.Y_ext[i, j] - bc.Y_ext[i, j + 2]) / 2
-            Ψ = k_ext * (aj * Jp + bj * Yp)
-            
-            # extract the normal vector
-            ν1, ν2 = sp.ν[1, i], sp.ν[2, i]
-            c1 = cos(θ) * ν1 + sin(θ) * ν2
-            c2 = cos(θ) * ν2 - sin(θ) * ν1
-            
-            A[i, j] = Φ * expo
-            B[i, j] = Ψ * expo * c1 + Φ * (im * order * expo / r) * c2
-        end
-    end
-    
     if mode == :tm
         ratio = homo / ext
         B[1:sp.n, :] .*= ratio
