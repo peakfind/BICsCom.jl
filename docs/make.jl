@@ -1,5 +1,5 @@
 using BICsCom
-using Documenter
+using Documenter, DocumenterCitations
 
 # for CMakieExt
 using CairoMakie
@@ -7,6 +7,8 @@ using CairoMakie
 DocMeta.setdocmeta!(BICsCom, :DocTestSetup, :(using BICsCom); recursive=true)
 
 const CMakieExt = Base.get_extension(BICsCom, :CMakieExt)
+
+bib = CitationBibliography("src/refs.bib")
 
 makedocs(;
     modules=[BICsCom, CMakieExt],
@@ -19,8 +21,10 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
-        "API" => "api.md"
+        "API" => "api.md",
+        "References" => "references.md"
     ],
+    plugins=[bib],
 )
 
 deploydocs(;
