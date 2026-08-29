@@ -127,9 +127,9 @@ the spherical expansion.
 - `k`: the wavenumber
 - `ext`: the dielectric constant outside the cylinder
 
-# Note 
-- `J_ext` and `Y_ext` are matrices of Bessel functions and Neumann functions, respectively. Their rows are indexed by radii (the sampling points) and columns are indexed by orders.
-- We uitilize the symmetry of the square. So this function is not applicable for general contours.
+!!! note
+    - `J_ext` and `Y_ext` are matrices of Bessel functions and Neumann functions, respectively. Their rows are indexed by radii (the sampling points) and columns are indexed by orders
+    - We uitilize the symmetry of the square. So this function is not applicable for general contours
 """
 function build_boundary_cache(sp::SamplingPoints, Ne, k, ext = 1.0)
     Ns = 4 * sp.n
