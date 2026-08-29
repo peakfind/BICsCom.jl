@@ -1,5 +1,8 @@
 # API
 
+```@index
+```
+
 ## Spherical expansion
 
 ## Extension: CMakieExt

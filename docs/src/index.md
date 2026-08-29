@@ -6,9 +6,10 @@ CurrentModule = BICsCom
 
 Documentation for [BICsCom](https://github.com/peakfind/BICsCom.jl).
 
-```@index
-```
+## Usage
 
-```@autodocs
-Modules = [BICsCom]
+This package has not been registered. So it need to be installed by url. Press `]` in 
+the REPL to enter `pkg>` mode. Then enter
+```julia
+pkg> add https://github.com/peakfind/BICsCom.jl.git
 ```
