@@ -3,6 +3,10 @@
 ```@index
 ```
 
+```@autodocs
+Modules = [BICsCom]
+```
+
 ## Spherical expansion
 
 ## Extension: CMakieExt
