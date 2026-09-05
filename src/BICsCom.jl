@@ -1,5 +1,6 @@
 module BICsCom
 
+using Printf
 using LinearAlgebra
 using Bessels
 
@@ -13,5 +14,11 @@ export BoundaryCache, build_boundary_cache, assemble_dtn
 include("boundaryCondition.jl")
 export apply_bc
 export beta_m, assemble_tbc, apply_tbc!
+
+include("mode.jl")
+export compute_mode, eval_field
+
+include("ext.jl")
+export plot_square!, plot_samplingpoints!, plot_min_svals!
 
 end

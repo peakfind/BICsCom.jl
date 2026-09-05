@@ -2,12 +2,7 @@ using BICsCom
 using Documenter, DocumenterCitations, DocumenterCodeBlocks
 using Literate
 
-# for CMakieExt
-using CairoMakie
-
 DocMeta.setdocmeta!(BICsCom, :DocTestSetup, :(using BICsCom); recursive=true)
-
-const CMakieExt = Base.get_extension(BICsCom, :CMakieExt)
 
 bib = CitationBibliography("src/refs.bib")
 
@@ -26,7 +21,7 @@ output = joinpath(@__DIR__, "src", "tutorials")
 generate_tutorials(source, output)
 
 makedocs(;
-    modules=[BICsCom, CMakieExt],
+    modules=[BICsCom],
     authors="Jiayi Zhang",
     sitename="BICsCom.jl",
     format=Documenter.HTML(;

@@ -11,8 +11,6 @@ Modules = [BICsCom]
 
 ## Extension: CMakieExt
 
-```@docs
-CMakieExt.plot_square!
-CMakieExt.plot_samplingpoints!
-CMakieExt.plot_min_svals!
-```
+The plotting functions `plot_square!`, `plot_samplingpoints!`, and `plot_min_svals!`
+are implemented by the `CMakieExt` extension and become available once `CairoMakie`
+is loaded. Their documentation is listed above with the rest of the package API.
