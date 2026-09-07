@@ -35,7 +35,9 @@ makedocs(;
                            "introduction/problem.md",
                            "introduction/method.md"],
         "Tutorials" => ["tutorials/standing_cylinder_te.md",
-                        "tutorials/propagating_cylinder_te.md"],
+                        "tutorials/propagating_cylinder_te.md",
+                        "tutorials/standing_hole_te.md",
+                        "tutorials/standing_hole_tm.md"],
         "API" => "api.md",
         "References" => "references.md"
     ],
