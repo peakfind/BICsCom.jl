@@ -51,3 +51,26 @@ with_theme(theme_latexfonts()) do
     plot_min_svals!(axi, ks, msv)
     fig
 end
+
+# Next we plot the fields of modes associated to BICs we computed above.
+# For the BIC's frequency ``k1 = 0.4112``, 
+k1 = 0.4112
+mf1 = compute_mode(sp, k1, r, inn, ext, hom)
+# We compute the field on a grid `xs` times `ys`
+xs = -π:0.05:π
+ys = -π:0.05:π
+f1 = evaluate_field(mf1, xs, ys)
+
+with_theme(theme_latexfonts()) do
+    fig2 = Figure()
+    
+    angles = range(0, 2π, length=200)
+    xc = r .* cos.(angles)
+    yc = r .* sin.(angles)
+    
+    axi2 = Axis(fig2[1, 1], aspect = 1, xlabel = L"$x$", ylabel = L"$y$")
+    hm, _ = plot_field_mode!(axi2, xs, ys, real.(f1))
+    lines!(axi2, xc, yc, color = :black)
+    Colorbar(fig2[1, 2], hm)
+    fig2
+end
