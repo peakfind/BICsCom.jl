@@ -29,8 +29,8 @@ outside the cylinder.
 - `Ne`: the number of terms in the truncated spherical expansion
 - `k`: the wavenumber
 - `r`: the radius of the cylinder
-- `inn`: the dielectric constant inside the cylinder
-- `ext`: the dielectric constant outside the cylinder
+- `inn`: the dielectric constant inside the cylinders or air-holes
+- `ext`: the dielectric constant outside the cylinders or air-holes
 """
 function build_cylinder_cache(Ne, k, r, inn = 1.0, ext = 1.0) 
     Ne2 = Ne + 2
