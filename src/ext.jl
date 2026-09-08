@@ -43,3 +43,16 @@ to be loaded.
 - `lkwargs`: keyword arguments for `lines!` in `CairoMakie`
 """
 function plot_min_svals! end
+
+"""
+    plot_field_mode!(ax, xs, ys, field; hkwargs = (colormap = :coolwarm))
+
+Plot the field of the mode of a BIC.
+
+# Arguments
+- `xs`: discrete points along the ``x`` direction (the direction with periodicity)
+- `ys`: discrete points along the ``y`` direction
+- `field`: a matrix of size `length(xs)` times `length(ys)`
+- `hkwargs`: keyword arguments for `heatmap!` in `CairoMakie`
+"""
+function plot_field_mode! end
