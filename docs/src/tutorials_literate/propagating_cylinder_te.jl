@@ -54,3 +54,27 @@ with_theme(theme_latexfonts()) do
     plot_min_svals!(axi, ks, msv)   
     fig
 end
+
+# We extract the frequency for this x-odd BIC
+ind = argmin(msv)
+ko = ks[ind]
+
+mfo = compute_mode(sp, ko, r, inn, ext, hom; α = α, period = 2π)
+
+xs = -π:0.05:π
+ys = -π:0.05:π
+fo = evaluate_field(mfo, xs, ys)
+
+with_theme(theme_latexfonts()) do 
+    fig2 = Figure()
+    
+    angles = range(0, 2π, length=200)
+    xc = r .* cos.(angles)
+    yc = r .* sin.(angles)
+    
+    axi2 = Axis(fig2[1, 1], aspect = 1, xlabel = L"$x$", ylabel = L"$y$")
+    hm, _ = plot_field_mode!(axi2, xs, ys, real.(fo))
+    lines!(axi2, xc, yc, color = :black)
+    Colorbar(fig2[1, 2], hm)
+    fig2
+end

@@ -25,33 +25,35 @@ struct ModeField
 end
 
 """
-    compute_mode(sp::SamplingPoints, k, r, inn, ext, homo)
+    compute_mode(sp::SamplingPoints, k, r, inn, ext, homo) -> ModeField
 
-TBW
+Compute the corresponding mode of a BIC.
 
 # Arguments
+- `sp`: 
 """
-function compute_mode(sp::SamplingPoints, k, r, inn, ext, homo)
+function compute_mode(sp::SamplingPoints, k, r, inn, ext, homo; α::Float64 = 0.0, mode::Symbol = :te, period::Float64 = 2π)
     n = sp.n
     
     odrs = [j - 1 - 2n for j in 1:4n]
 
     cydc = build_cylinder_cache(4n, k, r, inn, ext)
-    coef = get_coeff(4n, cydc, inn, ext)
+    coef = get_coeff(4n, cydc, inn, ext, mode = mode)
     bydc = build_boundary_cache(sp, 4n, k, ext)
-    Λ, A = assemble_dtn(sp, 4n, coef, bydc, k, ext)
-    Δ = apply_bc(Λ, n)
-    apply_tbc!(Δ, sp, k; homo = homo)
+    Λ, A = assemble_dtn(sp, 4n, coef, bydc, k, ext; mode = mode, homo = homo)
+    Δ = apply_bc(Λ, n; α = α, period = period)
+    apply_tbc!(Δ, sp, k; α = α, homo = homo, period = period)
     
     evals, evecs = eigen(Δ)
     idx = argmin(abs.(evals))
     v = evecs[:, idx]
     
     # Reconstruct the Dirichlet data on 4 edges
+    e⁺ = exp(im * α * period)
     vb = v[1:n]
     vl = v[n+1:2n]
     vt = v[2n+1:end]
-    vr = reverse(vl)
+    vr = e⁺ .* reverse(vl)
     u = [vb; vl; vt; vr]
     
     c = A \ u
@@ -59,6 +61,11 @@ function compute_mode(sp::SamplingPoints, k, r, inn, ext, homo)
     return ModeField(k, inn, ext, r, odrs, coef, c)
 end
 
+"""
+    evaluate_field(mf::ModeField, xs, ys)
+
+TBW
+"""
 function evaluate_field(mf::ModeField, xs, ys)
     field = zeros(ComplexF64, length(xs), length(ys))
     ki = mf.k * sqrt(mf.inn)
