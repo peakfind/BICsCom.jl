@@ -55,6 +55,11 @@ end
 # Next we plot the fields of modes associated to BICs we computed above.
 # For the BIC's frequency ``k1 = 0.4112``, 
 k1 = 0.4112
+
+#  The eigenvector of the boundary system with eigenvalue closest to zero is
+#  selected, the Dirichlet data on the four edges are reconstructed, and the
+#  coefficients of the cylindrical expansion are returned in a [`ModeField`](@ref)
+#
 mf1 = compute_mode(sp, k1, r, inn, ext, hom)
 # We compute the field on a grid `xs` times `ys`
 xs = -π:0.05:π

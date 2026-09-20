@@ -27,8 +27,9 @@ function BICsCom.plot_min_svals!(ax, ks, msvals; skwargs = (color = :tomato, mar
     return ax
 end
 
-function BICsCom.plot_field_mode!(ax, xs, ys, field; hkwargs = (; colormap = :coolwarm))
-    hm = heatmap!(ax, xs, ys, field; hkwargs...)
+function BICsCom.plot_field_mode!(ax, xs, ys, field; transform = abs, hkwargs = (; colormap = :coolwarm))
+    hm = heatmap!(ax, xs, ys, transform.(field); hkwargs...)
+
     return hm, ax
 end
 

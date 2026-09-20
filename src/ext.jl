@@ -45,14 +45,16 @@ to be loaded.
 function plot_min_svals! end
 
 """
-    plot_field_mode!(ax, xs, ys, field; hkwargs = (colormap = :coolwarm))
+    plot_field_mode!(ax, xs, ys, field; transform = abs, hkwargs = (; colormap = :coolwarm))
 
-Plot the field of the mode of a BIC.
+Plot the field of the mode of a BIC. This method plots the matrix `field` of size `length(xs)` times `length(ys)`.
 
-# Arguments
-- `xs`: discrete points along the ``x`` direction (the direction with periodicity)
-- `ys`: discrete points along the ``y`` direction
-- `field`: a matrix of size `length(xs)` times `length(ys)`
+# Keyword Arguments
+- `transform = abs`: the function applied elementwise to the complex field, e.g.
+  `abs`, `real`, or `imag`
 - `hkwargs`: keyword arguments for `heatmap!` in `CairoMakie`
+
+This function is provided by the `CMakieExt` extension and requires `CairoMakie`
+to be loaded.
 """
 function plot_field_mode! end

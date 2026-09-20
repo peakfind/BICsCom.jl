@@ -8,16 +8,16 @@ using LinearAlgebra
 
 n = 9
 inn = 1.0
-ext = 5
+ext = 11.6
 hom = 1.0
-r = 0.3 * 2π
+r = 0.3 * 2π;
 
-msv = Float64[]
+msv = Float64[];
 
 sq = Square([0.0, 0.0], π) # period = 2π 
 sp = get_samplingpoints(sq, n) # we have 4n points on the boundary
 
-ks =  0.4:1e-5:1.0
+ks =  0.45:1e-5:1.0;
 
 # We note that we need to specify `mode = :tm` in [`assemble_dtn`](@ref).
 for k in ks
@@ -42,4 +42,30 @@ with_theme(theme_latexfonts()) do
                title = "minimal singular values vs. frequencies") 
     plot_min_svals!(axi, ks, msv)
     fig
+end
+
+# We extract the BIC with the minimal frequency
+ind = argmin(msv)
+k1 = ks[ind]
+
+mf1 = compute_mode(sp, k1, r, inn, ext, hom; mode = :tm)
+
+xs = -π:0.05:π
+ys = -4:0.05:4
+fo = evaluate_field(mf1, xs, ys)
+
+with_theme(theme_latexfonts()) do 
+    fig2 = Figure()
+    
+    angles = range(0, 2π, length=200)
+    xc = r .* cos.(angles)
+    yc = r .* sin.(angles)
+    
+    axi2 = Axis(fig2[1, 1],  aspect = DataAspect(), xlabel = L"$x$", ylabel = L"$y$")
+    hm, _ = plot_field_mode!(axi2, xs, ys, fo; transform = real)
+    lines!(axi2, xc, yc, color = :black)
+    lines!(axi2, [-π, π], [π, π], color = :black)
+    lines!(axi2, [-π, π], [-π, -π], color = :black)
+    Colorbar(fig2[1, 2], hm)
+    fig2
 end
