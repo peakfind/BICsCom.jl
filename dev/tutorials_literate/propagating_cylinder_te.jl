@@ -19,7 +19,7 @@ r = 0.35 * 2π
 α = 0.2483
 
 # collect minimal singular values
-msv = Float64[]
+msv = Float64[];
 
 # a square with period 2π
 sq = Square([0.0, 0.0], π)
@@ -53,4 +53,29 @@ with_theme(theme_latexfonts()) do
                title = "minimal singular values vs. frequencies")
     plot_min_svals!(axi, ks, msv)   
     fig
+end
+
+# We extract the frequency for this x-odd BIC
+ind = argmin(msv)
+ko = ks[ind]
+
+mfo = compute_mode(sp, ko, r, inn, ext, hom; α = α, period = 2π)
+
+xs = -5π:0.05:5π
+ys = -4:0.05:4
+fo = evaluate_field(mfo, sq, xs, ys)
+normalize_field!(fo)
+
+with_theme(theme_latexfonts()) do 
+    fig2 = Figure()
+    
+    angles = range(0, 2π, length=200)
+    xc = r .* cos.(angles)
+    yc = r .* sin.(angles)
+    
+    axi2 = Axis(fig2[1, 1], aspect = DataAspect(), xlabel = L"$x$", ylabel = L"$y$")
+    hm, _ = plot_field_mode!(axi2, xs, ys, fo, transform = real)
+    lines!(axi2, xc, yc, color = :black)
+    Colorbar(fig2[1, 2], hm)
+    fig2
 end
