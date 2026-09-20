@@ -46,21 +46,12 @@ function plot_min_svals! end
 
 """
     plot_field_mode!(ax, xs, ys, field; transform = abs, hkwargs = (; colormap = :coolwarm))
-    plot_field_mode!(ax, mf::ModeField, sq::Square, xs, ys; transform = abs, gauge = true, hkwargs = (; colormap = :coolwarm))
 
-Plot the field of the mode of a BIC.
-
-The first method plots the matrix `field` of size `length(xs)` times `length(ys)`.
-The second method evaluates the field of `mf` on the grid with Bloch continuation,
-see [`evaluate_field`](@ref).
+Plot the field of the mode of a BIC. This method plots the matrix `field` of size `length(xs)` times `length(ys)`.
 
 # Keyword Arguments
 - `transform = abs`: the function applied elementwise to the complex field, e.g.
   `abs`, `real`, or `imag`
-- `gauge = true`: apply [`gauge_field!`](@ref) before `transform`. With the
-  default `transform = abs` this is a visual no-op, and it makes
-  `transform = real` show the gauge-corrected standing-wave pattern for
-  standing BICs (`α = 0`)
 - `hkwargs`: keyword arguments for `heatmap!` in `CairoMakie`
 
 This function is provided by the `CMakieExt` extension and requires `CairoMakie`

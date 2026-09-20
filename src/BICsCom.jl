@@ -15,7 +15,7 @@ export apply_bc
 export beta_m, assemble_tbc, apply_tbc!
 
 include("mode.jl")
-export ModeField, compute_mode, evaluate_field, normalize_field!, gauge_field!
+export ModeField, compute_mode, evaluate_field, normalize_field!
 
 include("ext.jl")
 export plot_square!, plot_samplingpoints!, plot_min_svals!, plot_field_mode!

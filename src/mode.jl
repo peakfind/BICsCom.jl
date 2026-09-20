@@ -103,15 +103,16 @@ expansion was fitted. `xs` must lie within that cell (`|x| ≤ semi`); for point
 outside it, use the second method.
 
 The second method evaluates the field with Bloch continuation: each point is
-folded into the cell of `sq` and multiplied by `exp(im*α*L*m)`, the phase of its
-cell (`L = 2*sq.semi`). For `α = 0` this is the periodic repetition. The `Square`
+folded into the cell of `sq` and multiplied by `exp(im * α * L * m)`, the phase of its
+cell (`L = 2 * sq.semi`). For `α = 0` this is the periodic repetition. The `Square`
 must be the one that generated the sampling points used to build `mf`, i.e.
-`period == 2*sq.semi`.
+`period == 2 * sq.semi`.
 
 !!! note
     The field is determined up to a constant factor inherited from the
-    arbitrary normalization of the eigenvector; see [`gauge_field!`](@ref) and
-    [`normalize_field!`](@ref).
+    arbitrary normalization and phase of the eigenvector; see
+    [`normalize_field!`](@ref) for the scale. The phase must be fixed by a
+    physical convention — e.g. the symmetry we expected.
 """
 function evaluate_field(mf::ModeField, xs, ys)
     field = zeros(ComplexF64, length(xs), length(ys))
@@ -156,7 +157,7 @@ function evaluate_field(mf::ModeField, sq::Square, xs, ys)
     return field
 end
 
-# two post-processing utilities for plotting modes
+# post-processing utilities for plotting modes
 
 """
     normalize_field!(field) -> field
@@ -165,23 +166,3 @@ Normalize `field` to unit maximum modulus (max-norm), the usual convention for
 comparing the fields of different modes.
 """
 normalize_field!(field) = (field ./= maximum(abs, field); field)
-
-"""
-    gauge_field!(field) -> field
-
-Rotate `field` by a global phase so that its imaginary part is as small as
-possible. The optimal phase is `-arg(Σᵢ uᵢ²)/2`; the result is then flipped so
-that its dominant entry is positive real.
-
-For standing BICs (`α = 0`) the mode is real up to a phase, so `real.(field)`
-after this transformation shows the standing-wave pattern, and the residual
-imaginary part is numerical noise. For propagating BICs the field is genuinely
-complex and no phase makes it real — plot `abs.(field)` instead, without gauging.
-"""
-function gauge_field!(field)
-    a = sum(x -> x^2, field)                    # Σ uᵢ², phase-sensitive
-    field .*= exp(-im * angle(a) / 2)
-    i0 = argmax(abs, field)
-    real(field[i0]) < 0 && (field .*= -1)
-    return field
-end

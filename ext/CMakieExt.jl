@@ -33,12 +33,4 @@ function BICsCom.plot_field_mode!(ax, xs, ys, field; transform = abs, hkwargs = 
     return hm, ax
 end
 
-function BICsCom.plot_field_mode!(ax, mf::ModeField, sq::Square, xs, ys; transform = abs, gauge = true, hkwargs = (; colormap = :coolwarm))
-    field = evaluate_field(mf, sq, xs, ys)
-    gauge && gauge_field!(field)
-    hm = heatmap!(ax, xs, ys, transform.(field); hkwargs...)
-
-    return hm, ax
-end
-
 end
