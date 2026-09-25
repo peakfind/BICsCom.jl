@@ -7,4 +7,5 @@ DocumenterCodeBlocks = "b6400b83-267f-4b55-9fd8-bffc853bdfd8"
 Literate = "98b081ad-f1c9-55d3-8b20-4c87d4299306"
 
 [compat]
+CairoMakie = "0.15.15"
 Documenter = "1.19.0"
