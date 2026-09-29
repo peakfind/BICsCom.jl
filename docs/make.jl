@@ -28,6 +28,7 @@ makedocs(;
         canonical="https://peakfind.github.io/BICsCom.jl",
         edit_link="main",
         assets=String[],
+        mathengine=MathJax3(),
     ),
     pages=[
         "Home" => "index.md",
