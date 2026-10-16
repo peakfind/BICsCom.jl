@@ -47,9 +47,11 @@ Compute the mode of a BIC at the wavenumber `k`.
 - `period`: the period of the slab. It must equal the cell width of the square used to build `sp`
 
 !!! note
-    The field is determined only up to a constant factor inherited from the
-    arbitrary normalization of the eigenvector. To evaluate the field on a
-    grid, use [`evaluate_field`](@ref).
+    The phase of the mode is fixed by a symmetry gauge (see `_fix_phase!`):
+    for `α = 0` (standing waves) the field is real; for `α ≠ 0` (propagating
+    BICs) it satisfies `u(-x, y) = conj(u(x, y))`. Only the overall scale
+    remains arbitrary — use [`normalize_field!`](@ref) after
+    [`evaluate_field`](@ref) to fix it.
 
 """
 function compute_mode(sp::SamplingPoints, k, r, inn, ext, homo; α::Float64 = 0.0, mode::Symbol = :te, period::Float64 = 2π)
@@ -71,9 +73,55 @@ function compute_mode(sp::SamplingPoints, k, r, inn, ext, homo; α::Float64 = 0.
     # Reconstruct the Dirichlet data on 4 edges
     u = _reconstruct_dirichlet(v, n, α, period)
     
+    # Fix the phase
+    _fix_phase!(u, α, n)
+    
     c = A \ u
 
     return ModeField(k, inn, ext, r, odrs, coef, c, mode, α)
+end
+
+"""
+    _fix_phase!(u, α, n) -> u
+
+Fix the arbitrary global phase of the boundary Dirichlet data `u` (4n values,
+counterclockwise: bottom → left → top → right).
+
+For `α = 0` (standing waves), time-reversal symmetry maps the mode to itself,
+so the mode is real up to a phase.
+
+For `α ≠ 0` (propagating BICs) the mode is genuinely complex, but the
+composition of mirror reflection `x → -x` and conjugation maps the mode to
+itself, so the gauge `u(-x, y) = conj(u(x, y))` exists.
+
+Mirror pairs: the bottom and top edges are reversed in place; the left and
+right edges are swapped and reversed (counted twice, once per edge — a uniform
+reweighting of an edge block does not change `arg(a)`).
+
+!!! note
+    Both sums are *bilinear* (no conjugation) — `dot(u, u)` computes `Σ|uᵢ|²`, which is real and would always give `γ = 0`.
+
+The gauge determines the phase only up to a sign (`γ` and `γ + π` are
+equivalent); the sign is determined by requiring the dominant entry of `u` to be
+positive real.
+"""
+function _fix_phase!(u, α, n)
+    if α == 0.0
+        a = sum(x -> x^2, u)
+    else
+        a = sum(i -> u[i] * u[n+1 - i], 1:n) +            # bottom
+            2 * sum(i -> u[n + i] * u[4n+1 - i], 1:n) +   # left & right
+            sum(i -> u[2n + i] * u[3n+1 - i], 1:n)        # top
+    end
+
+    γ = -angle(a)/2
+    phase = cis(γ)
+    u .*= phase
+
+    i0 = argmax(abs.(u))
+    real(u[i0]) < 0 && (u .*= -1)
+
+    return u
 end
 
 function _reconstruct_dirichlet(v, n, α, period)
@@ -109,10 +157,10 @@ must be the one that generated the sampling points used to build `mf`, i.e.
 `period == 2 * sq.semi`.
 
 !!! note
-    The field is determined up to a constant factor inherited from the
-    arbitrary normalization and phase of the eigenvector; see
-    [`normalize_field!`](@ref) for the scale. The phase must be fixed by a
-    physical convention — e.g. the symmetry we expected.
+    The field inherits the phase convention fixed by [`compute_mode`](@ref):
+    real for standing waves (`α = 0`), and `u(-x, y) = conj(u(x, y))` for
+    propagating BICs. Only the overall scale remains arbitrary; see
+    [`normalize_field!`](@ref).
 """
 function evaluate_field(mf::ModeField, xs, ys)
     field = zeros(ComplexF64, length(xs), length(ys))
