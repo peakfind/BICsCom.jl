@@ -15,9 +15,13 @@ Contain information of modes corresponding to BICs.
 - `expan_coeffs::Vector{ComplexF64}`: the coefficients before special functions
 - `mode::Symbol`: the polarizations, supported types: `:te` or `:tm`
 - `α::Float64`: the Bloch wavenumber, it is only nonzero for propagating BICs
+- `homo::Float64`: the dielectric constant of the homogeneous medium outside the periodic slab
+- `period::Float64`: the period of the slab
+- `exterior_top::Vector{ComplexF64}`: Fourier coefficients of the Dirichlet data on the top edge, used by the Rayleigh continuation, see [`evaluate_field`](@ref)
+- `exterior_bot::Vector{ComplexF64}`: the same for the bottom edge, see [`exterior_top`](@ref)
 """
-struct ModeField 
-    k::Float64 
+struct ModeField
+    k::Float64
     inn::Float64
     ext::Float64
     r::Float64
@@ -26,6 +30,10 @@ struct ModeField
     expan_coeffs::Vector{ComplexF64}
     mode::Symbol
     α::Float64
+    homo::Float64
+    period::Float64
+    exterior_top::Vector{ComplexF64}
+    exterior_bot::Vector{ComplexF64}
 end
 
 """
@@ -78,7 +86,37 @@ function compute_mode(sp::SamplingPoints, k, r, inn, ext, homo; α::Float64 = 0.
     
     c = A \ u
 
-    return ModeField(k, inn, ext, r, odrs, coef, c, mode, α)
+    # Fourier coefficients of the gauged edge data, for the Rayleigh
+    # continuation outside the cell (see evaluate_field)
+    ct, cb = _edge_fourier_coeffs(sp, u, α, period)
+
+    return ModeField(k, inn, ext, r, odrs, coef, c, mode, α, homo, period, ct, cb)
+end
+
+"""
+    _edge_fourier_coeffs(sp::SamplingPoints, u, α, period) -> (ct, cb)
+
+Fourier coefficients of the quasi-periodic Dirichlet data on the top and
+bottom edges: `ĉ_m = (1/n) Σⱼ u(xⱼ) exp(-iα_m xⱼ)` with `α_m = α + 2πm/period`.
+
+The `1/n` normalization makes the pair `ĉ_m ⟷ uⱼ` exactly invertible on the
+uniform sampling grid (discrete orthogonality). The same Fourier-mode set as
+in [`apply_tbc!`](@ref) is used.
+"""
+function _edge_fourier_coeffs(sp::SamplingPoints, u, α, period)
+    n = sp.n
+    fmodes = iseven(n) ? collect(-n÷2 : n÷2 - 1) : collect(-(n-1)÷2 : (n-1)÷2)
+    αm = α .+ 2π .* fmodes ./ period
+
+    # the top edge is stored left→right; the bottom edge is stored
+    # right→left, so reverse its data (a copy — never reverse! a view into
+    # sp.cc or u). After reversal both edges share the same x grid.
+    xt = sp.cc[1, 2n+1:3n]
+    ut = u[2n+1:3n]
+    ub = reverse(u[1:n])
+
+    F = [exp(-im * a * x) / n for a in αm, x in xt]
+    return F * ut, F * ub
 end
 
 """
@@ -124,6 +162,14 @@ function _fix_phase!(u, α, n)
     return u
 end
 
+"""
+    _reconstruct_dirichlet(v, n, α, period) -> u
+
+Reconstruct the Dirichlet data on all four edges of the cell from the
+eigenvector `v` (3n values on the bottom, left and top edges). The right edge
+is the reverse mirror of the left edge times the Bloch phase
+`exp(im * α * period)` (`1` for standing waves).
+"""
 function _reconstruct_dirichlet(v, n, α, period)
     e⁺ = iszero(α) ? one(eltype(v)) : exp(im * α * period) 
     u = similar(v, 4n)
@@ -146,9 +192,10 @@ end
 Evaluate the field of `mf` on the grid given by `xs` and `ys`; `xs` varies along
 the rows of the returned matrix.
 
-The first method evaluates the field in the central cell only, where the
-expansion was fitted. `xs` must lie within that cell (`|x| ≤ semi`); for points
-outside it, use the second method.
+The first method evaluates the field in the central cell, where the expansion
+was fitted; `xs` must lie within that cell (`|x| ≤ semi`). Points with
+`|y| > semi` are evaluated by the Rayleigh continuation: the (quasi-)periodic
+Fourier series built from the Dirichlet data on the top/bottom edges. 
 
 The second method evaluates the field with Bloch continuation: each point is
 folded into the cell of `sq` and multiplied by `exp(im * α * L * m)`, the phase of its
@@ -167,29 +214,58 @@ function evaluate_field(mf::ModeField, xs, ys)
     ki = mf.k * sqrt(mf.inn)
     ke = mf.k * sqrt(mf.ext)
     trunc = length(mf.orders)
-    
+    semi = mf.period / 2
+
+    # quasi-periodic Rayleigh data for the exterior (same mode set as apply_tbc!)
+    nm = length(mf.exterior_top)
+    fmodes = iseven(nm) ? (-nm÷2 : nm÷2 - 1) : (-(nm-1)÷2 : (nm-1)÷2)
+    αm = mf.α .+ 2π .* fmodes ./ mf.period
+    βm = [beta_m(m, mf.k; α = mf.α, homo = mf.homo, period = mf.period) for m in fmodes]
+
     @inbounds for j in eachindex(ys)
         y = ys[j]
 
-        for i in eachindex(xs)
-            x = xs[i]
-            rd = sqrt(x^2 + y^2)
-            θ = atan(y, x)
-        
-            val = zero(ComplexF64)
+        if abs(y) <= semi
+            # ---- inside the cell: cylindrical expansion ----
+            for i in eachindex(xs)
+                x = xs[i]
+                rd = sqrt(x^2 + y^2)
+                θ = atan(y, x)
 
-            if rd < mf.r 
-                for t in 1:trunc 
-                    val += mf.expan_coeffs[t] * besselj(mf.orders[t], ki * rd) * exp(im * mf.orders[t] * θ)
+                val = zero(ComplexF64)
+
+                if rd < mf.r
+                    for t in 1:trunc
+                        val += mf.expan_coeffs[t] * besselj(mf.orders[t], ki * rd) * exp(im * mf.orders[t] * θ)
+                    end
+                else
+                    for t in 1:trunc
+                        radial = mf.coeffs[1, t] * besselj(mf.orders[t], ke * rd) + mf.coeffs[2, t] * bessely(mf.orders[t], ke * rd)
+                        val += mf.expan_coeffs[t] * radial * exp(im * mf.orders[t] * θ)
+                    end
                 end
-            else
-                for t in 1:trunc
-                    radial = mf.coeffs[1, t] * besselj(mf.orders[t], ke * rd) + mf.coeffs[2, t] * bessely(mf.orders[t], ke * rd)
-                    val += mf.expan_coeffs[t] * radial * exp(im * mf.orders[t] * θ)
-                end
+
+                field[i, j] = val
             end
-        
-            field[i, j] = val
+        else
+            # ---- outside the cell: Rayleigh continuation ----
+            # e^{iβ_m(|y|-semi)} depends only on y: compute once per row
+            if y > semi
+                eβ = exp.(im .* βm .* (y - semi))
+                ĉ = mf.exterior_top
+            else
+                eβ = exp.(.-im .* βm .* (y + semi))
+                ĉ = mf.exterior_bot
+            end
+
+            for i in eachindex(xs)
+                x = xs[i]
+                val = zero(ComplexF64)
+                for t in 1:nm
+                    val += ĉ[t] * exp(im * αm[t] * x) * eβ[t]
+                end
+                field[i, j] = val
+            end
         end
     end
 
