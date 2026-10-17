@@ -7,6 +7,17 @@
 Modules = [BICsCom]
 ```
 
+## Internals
+
+These functions are not exported and are not part of the public API;
+they may change without notice.
+
+```@docs
+BICsCom._fix_phase!
+BICsCom._reconstruct_dirichlet
+BICsCom._edge_fourier_coeffs
+```
+
 ## Extension: CMakieExt
 
 The plotting functions 
